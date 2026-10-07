@@ -1,0 +1,157 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#050B1C">
+<meta name="robots" content="noindex, nofollow">
+<title>SAQ · Lube Distribuidora</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 140 112'%3E%3Cg transform='translate(20,0) skewX(-10)'%3E%3Cpath fill='%231E2B8C' d='M24 6h34v56h42c6 0 10 4 10 10v12c0 10-8 18-18 18H24C12 102 4 94 4 82V26C4 14 12 6 24 6Z'/%3E%3Cpath fill='%23EE1B24' d='M68 6h36c6 0 10 4 10 10v32c0 3-2 4-5 4H68Z'/%3E%3C/g%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wght@700;800;900&family=IBM+Plex+Sans:wght@500;600;700&family=JetBrains+Mono:wght@600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="estilo.css">
+</head>
+<body>
+<div class="fundo" aria-hidden="true"></div>
+
+<header class="topo">
+  <div class="topo__marca">
+    <svg class="topo__l" viewBox="0 0 140 112" aria-hidden="true"><g transform="translate(20,0) skewX(-10)"><path fill="#2A41C8" d="M24 6h34v56h42c6 0 10 4 10 10v12c0 10-8 18-18 18H24C12 102 4 94 4 82V26C4 14 12 6 24 6Z"/><path fill="#E5202C" d="M68 6h36c6 0 10 4 10 10v32c0 3-2 4-5 4H68Z"/></g></svg>
+    <span class="topo__saq">SAQ</span>
+  </div>
+  <div class="topo__placa"><img class="topo__logo" src="logo-lube.png" alt="Lube Distribuidora" width="560" height="187"></div>
+</header>
+
+<main class="pagina">
+
+  <!-- ===================== FORMULÁRIO ===================== -->
+  <section id="tela-form">
+    <div class="intro">
+      <p class="mono intro__olho"><span class="ponto"></span>Chamado do RCA · SAC</p>
+      <h1>Abrir SAQ</h1>
+      <p class="intro__sub">Preencha a ocorrência. O comprovante, com o número do protocolo, chega no seu e-mail.</p>
+    </div>
+
+    <form id="form" novalidate autocomplete="off">
+
+      <!-- 01 -->
+      <fieldset class="bloco">
+        <legend class="bloco__titulo"><span class="bloco__n mono">01</span>Quem está abrindo</legend>
+        <div class="campo" data-campo="email">
+          <label for="email">Seu e-mail de RCA</label>
+          <input id="email" name="email" type="email" inputmode="email" autocomplete="email"
+                 maxlength="120" placeholder="o e-mail do seu cadastro no WinThor" enterkeyhint="next">
+          <p class="rca" id="rca" aria-live="polite" hidden></p>
+          <p class="campo__ajuda" id="email-ajuda">O comprovante sai em seu nome, para este e-mail. Fica lembrado neste aparelho.</p>
+          <p class="campo__erro" aria-live="polite"></p>
+        </div>
+      </fieldset>
+
+      <!-- 02 -->
+      <fieldset class="bloco">
+        <legend class="bloco__titulo"><span class="bloco__n mono">02</span>Nota fiscal e motivo</legend>
+
+        <div class="campo campo--nf" data-campo="nf">
+          <label for="nf">Nota fiscal</label>
+          <input id="nf" name="nf" inputmode="numeric" maxlength="10" placeholder="Número da NF" enterkeyhint="next">
+          <p class="campo__erro" aria-live="polite"></p>
+        </div>
+
+        <div class="campo" data-campo="motivo">
+          <span class="rotulo" id="motivo-rotulo">Motivo <small class="mono">assuntos SAC do WinThor</small></span>
+          <div class="motivos" role="radiogroup" aria-labelledby="motivo-rotulo"></div>
+          <p class="campo__erro" aria-live="polite"></p>
+        </div>
+
+        <div class="campo" data-campo="detalhe">
+          <label for="detalhe">Descreva o motivo com detalhes</label>
+          <textarea id="detalhe" name="detalhe" rows="4" maxlength="2000"
+                    placeholder="O que aconteceu, quantas unidades, o que o cliente relatou…"></textarea>
+          <div class="campo__pe">
+            <p class="campo__erro" aria-live="polite"></p>
+            <span class="contador mono" id="contador">0 / 2000</span>
+          </div>
+        </div>
+      </fieldset>
+
+      <!-- 03 -->
+      <fieldset class="bloco">
+        <legend class="bloco__titulo"><span class="bloco__n mono">03</span>Produto</legend>
+
+        <div class="linha">
+          <div class="campo campo--cod" data-campo="codprod">
+            <label for="codprod">Cód. produto</label>
+            <input id="codprod" name="codprod" inputmode="numeric" maxlength="8" placeholder="Ex.: 642" enterkeyhint="next">
+            <p class="campo__erro" aria-live="polite"></p>
+          </div>
+
+          <div class="campo campo--prod" data-campo="produto">
+            <label for="produto">Produto</label>
+            <div class="ancora">
+              <input id="produto" name="produto" maxlength="160" placeholder="Preenche sozinho pelo código — ou busque pelo nome"
+                     role="combobox" aria-autocomplete="list" aria-expanded="false" aria-controls="sugestoes">
+              <ul id="sugestoes" class="sugestoes" role="listbox" hidden></ul>
+            </div>
+            <p class="campo__erro" aria-live="polite"></p>
+          </div>
+        </div>
+        <p class="cadastro mono" id="cadastro" aria-live="polite"></p>
+      </fieldset>
+
+      <!-- 04 -->
+      <fieldset class="bloco">
+        <legend class="bloco__titulo"><span class="bloco__n mono">04</span>Fotos comprobatórias</legend>
+        <p class="bloco__ajuda" id="dica-foto">Do produto ou da nota fiscal — de 1 a 3 fotos.</p>
+        <div class="campo" data-campo="fotos">
+          <div class="fotos" id="fotos"></div>
+          <p class="campo__erro" aria-live="polite"></p>
+        </div>
+        <input type="file" id="arquivo" accept="image/*" multiple hidden>
+      </fieldset>
+
+      <div class="aviso" id="aviso" role="alert" hidden></div>
+
+      <button type="submit" class="enviar" id="enviar">
+        <span class="enviar__texto">Enviar SAQ</span>
+        <svg class="enviar__seta" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h13M13 6l6 6-6 6" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        <span class="enviar__giro" aria-hidden="true"></span>
+      </button>
+    </form>
+  </section>
+
+  <!-- ===================== ENVIADO ===================== -->
+  <section id="tela-ok" class="ok" hidden tabindex="-1">
+    <div class="ok__selo" aria-hidden="true">
+      <svg viewBox="0 0 52 52"><circle cx="26" cy="26" r="24" fill="none" stroke="currentColor" stroke-width="2.5"/><path d="M15 27l7 7 15-16" fill="none" stroke="currentColor" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+    </div>
+    <p class="mono ok__olho">SAQ registrado</p>
+    <h2 class="ok__protocolo mono" id="ok-protocolo"></h2>
+    <p class="ok__msg" id="ok-msg"></p>
+
+    <dl class="ok__resumo">
+      <div><dt class="mono">RCA</dt><dd id="ok-rca"></dd></div>
+      <div><dt class="mono">Motivo</dt><dd id="ok-motivo"></dd></div>
+      <div><dt class="mono">Nota fiscal</dt><dd id="ok-nf"></dd></div>
+      <div><dt class="mono">Produto</dt><dd id="ok-produto"></dd></div>
+      <div><dt class="mono">Fotos</dt><dd id="ok-fotos"></dd></div>
+      <div><dt class="mono">Enviado para</dt><dd id="ok-para"></dd></div>
+    </dl>
+
+    <p class="ok__previa" id="ok-previa" hidden>
+      <strong>Modo prévia:</strong> nada foi enviado. O e-mail foi gravado em arquivo para conferir o visual.
+      <a id="ok-previa-link" href="#" target="_blank" rel="noopener">Abrir o e-mail</a>
+    </p>
+
+    <button type="button" class="enviar enviar--claro" id="novo">
+      <span class="enviar__texto">Abrir outro SAQ</span>
+    </button>
+  </section>
+</main>
+
+<footer class="rodape mono">Lube Distribuidora · SAQ</footer>
+
+<script src="motivos.js"></script>
+<script src="app.js"></script>
+</body>
+</html>

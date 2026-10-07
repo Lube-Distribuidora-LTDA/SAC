@@ -1,0 +1,17 @@
+{
+  "name": "saq-lube",
+  "version": "1.0.0",
+  "private": true,
+  "description": "SAQ — chamado do RCA para o SAC da Lube Distribuidora: tela de abertura e e-mail de comprovante.",
+  "engines": {
+    "node": "22.x"
+  },
+  "scripts": {
+    "local": "node servidor_local.js"
+  },
+  "dependencies": {
+    "imapflow": "^1.0.191",
+    "nodemailer": "^10.0.16",
+    "pg": "^8.13.1"
+  }
+}
