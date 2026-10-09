@@ -1,7 +1,8 @@
 # SAC — Lube Distribuidora
 
 > Até 2026-10-09 o sistema se chamava **SAQ**; o nome certo é **SAC** (Júlio). Endereço, repositório,
-> protocolo e textos foram trocados juntos.
+> protocolo e textos foram trocados juntos. O endereço antigo `saq-lube.vercel.app` continua ligado ao
+> projeto e redireciona (308) para `sac-lube.vercel.app` — regra `redirects` do `web/vercel.json`.
 
 Tela em que o **RCA abre um chamado para o SAC**: o e-mail dele, nota fiscal, motivo, detalhes, produto e
 até 3 fotos comprobatórias. Ao enviar, o sistema gera um **protocolo** e manda o comprovante **em nome do

@@ -5,6 +5,14 @@
     "api/enviar.js": { "maxDuration": 30 },
     "api/produtos.js": { "maxDuration": 60 }
   },
+  "redirects": [
+    {
+      "source": "/(.*)",
+      "has": [{ "type": "host", "value": "saq-lube.vercel.app" }],
+      "destination": "https://sac-lube.vercel.app/$1",
+      "permanent": true
+    }
+  ],
   "headers": [
     {
       "source": "/(.*)",
