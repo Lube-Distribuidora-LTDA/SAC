@@ -1,14 +1,16 @@
 /**
- * POST /api/enviar — recebe o SAC preenchido pelo RCA e manda o comprovante
- * para o e-mail dele, em nome dele: remetente com o nome do RCA, resposta para
- * o próprio RCA — "como se ele mesmo estivesse enviando para ele".
+ * POST /api/enviar — recebe o chamado de quem está LOGADO no SAC (RCA ou
+ * supervisor com conta liberada pelo TI) e manda o comprovante para o e-mail
+ * dessa conta, em nome dela: remetente com o nome, resposta para ela mesma —
+ * "como se ele mesmo estivesse enviando para ele".
  *
  * Corpo (JSON): { nf, motivo, detalhe, codprod, produto, email, fotos: [dataURL, ...] }
  * As fotos chegam já reduzidas pelo navegador (lado maior 1600 px, JPEG), para
  * caber no limite de 4,5 MB por requisição da Vercel e não pesar no 4G do RCA.
  *
  * Tudo é conferido de novo aqui: a tela ajuda, mas quem garante é o servidor.
- * O e-mail precisa ser de um RCA ativo no WinThor (_rca.js) — a tela é pública.
+ * Login (desde 2026-10-09): token do Painel conferido em _auth.js. RCA precisa
+ * continuar ativo no WinThor (_rca.js); supervisor entra pela conta liberada.
  * A NF precisa existir no WinThor e ter sido emitida até 1 mês atrás (_nf.js).
  * Se o e-mail não sair, a resposta diz que não saiu — nunca um "enviado" falso.
  */
@@ -18,6 +20,7 @@ const { montarEmail } = require("./_email.js");
 const { enviar } = require("./_correio.js");
 const { buscarRca, nomeBonito, primeiroNome, MSG_NAO_CADASTRADO } = require("./_rca.js");
 const { conferirNf } = require("./_nf.js");
+const { sessaoSac, registrar } = require("./_auth.js");
 
 const MAX_FOTOS = 3;
 const MAX_BYTES_FOTO = 3 * 1024 * 1024;
@@ -106,12 +109,27 @@ module.exports = async (req, res) => {
     return res.status(400).json({ erro: "corpo", mensagem: "Requisição sem dados." });
   }
 
+  // quem está logado: conta do SAC liberada pelo TI (sem isso, nada sai)
+  let sessao;
+  try {
+    sessao = await sessaoSac(req);
+  } catch (e) {
+    console.error("SAC: falha ao conferir o login", e && e.message);
+    return res.status(502).json({
+      erro: "falha_login",
+      mensagem: "Não consegui conferir seu login agora. Nada foi enviado — seus dados continuam na tela, tente de novo em instantes.",
+      detalhe: String(e && e.message ? e.message : e),
+    });
+  }
+  if (!sessao.ok) return res.status(sessao.status).json({ erro: "sessao", mensagem: sessao.mensagem });
+  corpo.email = sessao.email; // o comprovante vai para quem está logado, não para um e-mail digitado
+
   const { d, erros } = validar(corpo);
   if (Object.keys(erros).length) {
     return res.status(400).json({ erro: "dados_invalidos", mensagem: "Confira os campos destacados.", campos: erros });
   }
 
-  // quem é o RCA: sem conferir o cadastro, não sai nada (a tela é pública)
+  // quem é: RCA ativo no WinThor (pelo e-mail) ou supervisor liberado pelo TI
   let rca;
   try {
     rca = await buscarRca(d.email);
@@ -119,19 +137,25 @@ module.exports = async (req, res) => {
     console.error("SAC: falha ao conferir o RCA", e && e.message);
     return res.status(502).json({
       erro: "falha_cadastro",
-      mensagem: "Não consegui conferir seu cadastro de RCA agora. Nada foi enviado — seus dados continuam na tela, tente de novo em instantes.",
+      mensagem: "Não consegui conferir seu cadastro agora. Nada foi enviado — seus dados continuam na tela, tente de novo em instantes.",
       detalhe: String(e && e.message ? e.message : e),
     });
   }
-  if (!rca) {
-    return res.status(400).json({ erro: "dados_invalidos", mensagem: "Confira os campos destacados.", campos: { email: MSG_NAO_CADASTRADO } });
+  let autor;
+  if (rca) {
+    autor = { tipo: "rca", cod: rca.codusur, nome: nomeBonito(rca.nome), primeiro: primeiroNome(rca.nome) };
+  } else if (sessao.conta.tipo === "supervisor") {
+    const nome = nomeBonito(sessao.conta.nome || d.email.split("@")[0]);
+    autor = { tipo: "supervisor", cod: null, nome, primeiro: nome.split(" ")[0] };
+  } else {
+    return res.status(403).json({ erro: "rca", mensagem: MSG_NAO_CADASTRADO });
   }
-  const nomeRca = nomeBonito(rca.nome);
+  const nomeRca = autor.nome;
 
   // a NF existe no WinThor e foi emitida até 1 mês atrás? (regra do Júlio, 2026-10-09)
   let conf;
   try {
-    conf = await conferirNf(d.nf, rca.codusur);
+    conf = await conferirNf(d.nf, autor.cod);
   } catch (e) {
     console.error("SAC: falha ao conferir a NF", e && e.message);
     return res.status(502).json({
@@ -156,7 +180,7 @@ module.exports = async (req, res) => {
   const { assunto, html, texto } = montarEmail({
     protocolo, quando: agora, nf: d.nf, nfInfo: conf.nf, motivo: d.motivo, detalhe: d.detalhe,
     codprod: d.codprod, produto: d.produto, email: d.email, fotos: anexos,
-    rca: { cod: rca.codusur, nome: nomeRca, primeiro: primeiroNome(rca.nome) },
+    rca: autor,
   });
 
   const r = await enviar({ para: d.email, nomeRemetente: nomeRca, assunto, html, texto, anexos, protocolo });
@@ -169,12 +193,13 @@ module.exports = async (req, res) => {
     });
   }
 
-  console.log("SAC enviado", protocolo, "rca", rca.codusur, "motivo", d.motivo.cod, "nf", d.nf, "fotos", anexos.length);
+  console.log("SAC enviado", protocolo, autor.tipo, autor.cod || "-", "motivo", d.motivo.cod, "nf", d.nf, "fotos", anexos.length);
+  await registrar(sessao.token, "chamado", protocolo + " · NF " + d.nf);
   return res.status(200).json({
     ok: true,
     protocolo,
     para: d.email,
-    rca: { codusur: rca.codusur, nome: nomeRca },
+    rca: { codusur: autor.cod, nome: autor.nome, tipo: autor.tipo },
     nf: conf.nf,
     copia: r.copia,
     copiaEmEnviados: r.copiaEmEnviados,

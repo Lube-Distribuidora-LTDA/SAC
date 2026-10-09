@@ -3,11 +3,13 @@
  * emitida até 1 mês atrás? A tela mostra a emissão e o cliente, ou o motivo da
  * recusa. Quem garante de verdade é o /api/enviar, que confere de novo.
  *
- * Corpo: { nf, codusur? }   (codusur só desempata NF de número repetido)
+ * Só para quem está logado no SAC (o retorno traz nome de cliente).
+ * Corpo: { nf }   (o RCA da conta logada desempata NF de número repetido)
  * Resposta: 200 { ok: true, nf } | 422 { ok: false, situacao, mensagem, nf? }
  */
 const { faltandoVariaveis, responderErro } = require("./_db.js");
 const { conferirNf } = require("./_nf.js");
+const { sessaoSac } = require("./_auth.js");
 
 module.exports = async (req, res) => {
   res.setHeader("Cache-Control", "no-store");
@@ -19,7 +21,14 @@ module.exports = async (req, res) => {
   if (typeof corpo === "string") { try { corpo = JSON.parse(corpo); } catch (_) { corpo = null; } }
   const nf = String((corpo && corpo.nf) || "").replace(/\D/g, "");
   if (!/^\d{1,10}$/.test(nf)) return res.status(400).json({ ok: false, mensagem: "Número de NF inválido." });
-  const codusur = /^\d{1,6}$/.test(String(corpo && corpo.codusur)) ? Number(corpo.codusur) : null;
+  let sessao;
+  try {
+    sessao = await sessaoSac(req);
+  } catch (e) {
+    return res.status(502).json({ ok: false, mensagem: "Não consegui conferir seu login agora. Tente de novo em instantes." });
+  }
+  if (!sessao.ok) return res.status(sessao.status).json({ ok: false, mensagem: sessao.mensagem });
+  const codusur = sessao.conta.codusur || null;
 
   const faltam = faltandoVariaveis();
   if (faltam.length) {

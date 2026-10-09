@@ -216,7 +216,9 @@ function montarEmail(d) {
     ${blocoMotivo(d.motivo)}
 
     ${tabela([
-      ["RCA", `<span style="font-family:Consolas,'Courier New',monospace;font-size:15px;">${esc(d.rca.cod)}</span> &middot; ${esc(d.rca.nome)}`],
+      ["Aberto por", d.rca.cod
+        ? `RCA <span style="font-family:Consolas,'Courier New',monospace;font-size:15px;">${esc(d.rca.cod)}</span> &middot; ${esc(d.rca.nome)}`
+        : `Supervisor &middot; ${esc(d.rca.nome)}`],
       ["Nota fiscal", `<span style="font-family:Consolas,'Courier New',monospace;font-size:15px;">${esc(d.nf)}</span>` +
         (d.nfInfo ? ` <span style="color:${CINZA};font-weight:500;font-size:13px;">&middot; emitida em ${esc(d.nfInfo.emissao)}` +
                     (d.nfInfo.filial != null ? ` &middot; filial ${esc(d.nfInfo.filial)}` : "") + `</span>` : "")],
@@ -234,7 +236,7 @@ function montarEmail(d) {
     <p style="margin:28px 0 0;color:#3a4460;">
       Atenciosamente,<br>
       <strong style="color:${AZUL};">${esc(d.rca.nome)}</strong><br>
-      RCA ${esc(d.rca.cod)} &middot; Lube Distribuidora
+      ${d.rca.cod ? "RCA " + esc(d.rca.cod) : "Supervisor"} &middot; Lube Distribuidora
     </p>
   `, d.email);
 
@@ -242,7 +244,7 @@ function montarEmail(d) {
     `CHAMADO REGISTRADO — protocolo ${d.protocolo}`,
     `Aberto em ${quando}`,
     "",
-    `RCA: ${d.rca.cod} — ${d.rca.nome}`,
+    `Aberto por: ${d.rca.cod ? "RCA " + d.rca.cod : "Supervisor"} — ${d.rca.nome}`,
     `Motivo: ${d.motivo.rotulo} (WinThor, assunto ${d.motivo.cod} — ${d.motivo.winthor})`,
     `Nota fiscal: ${d.nf}` + (d.nfInfo ? ` (emitida em ${d.nfInfo.emissao}${d.nfInfo.filial != null ? `, filial ${d.nfInfo.filial}` : ""})` : ""),
     ...(d.nfInfo && d.nfInfo.cliente ? [`Cliente: ${d.nfInfo.codcli} — ${d.nfInfo.cliente}`] : []),

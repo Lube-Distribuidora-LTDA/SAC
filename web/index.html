@@ -25,6 +25,100 @@
 
 <main class="pagina">
 
+  <p class="carregando mono" id="carregando"><span class="enviar__giro" aria-hidden="true"></span>Conferindo seu acesso…</p>
+
+  <!-- ===================== LOGIN (Entrar / Primeiro acesso) ===================== -->
+  <section id="tela-login" hidden>
+    <div class="intro">
+      <p class="mono intro__olho"><span class="ponto"></span>Chamado do RCA</p>
+      <h1>Entrar no SAC</h1>
+      <p class="intro__sub">Para RCAs e supervisores da Lube. O primeiro acesso é liberado pelo TI.</p>
+    </div>
+
+    <div class="bloco gate">
+      <div class="gate__modos" role="tablist">
+        <button class="gate__modo is-on" type="button" role="tab" data-modo="entrar">Entrar</button>
+        <button class="gate__modo" type="button" role="tab" data-modo="primeiro">Primeiro acesso</button>
+      </div>
+
+      <form class="gate__form is-on" data-form="entrar" novalidate>
+        <div class="campo">
+          <label for="l-email">E-mail</label>
+          <input id="l-email" type="email" inputmode="email" autocomplete="username" maxlength="120" placeholder="o e-mail do seu cadastro">
+        </div>
+        <div class="campo">
+          <label for="l-senha">Senha</label>
+          <input id="l-senha" type="password" autocomplete="current-password" maxlength="72" placeholder="••••••••">
+        </div>
+        <button class="enviar" type="submit" id="btn-entrar">
+          <span class="enviar__texto">Entrar</span>
+          <svg class="enviar__seta" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h13M13 6l6 6-6 6" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          <span class="enviar__giro" aria-hidden="true"></span>
+        </button>
+        <button class="enviar enviar--claro" type="button" id="btn-pedir" hidden>
+          <span class="enviar__texto">Pedir acesso ao SAC</span>
+          <span class="enviar__giro" aria-hidden="true"></span>
+        </button>
+      </form>
+
+      <form class="gate__form" data-form="primeiro" novalidate>
+        <div class="campo">
+          <span class="rotulo" id="tipo-rotulo">Você é</span>
+          <div class="tipos" role="radiogroup" aria-labelledby="tipo-rotulo">
+            <button type="button" class="motivo tipo is-on" role="radio" aria-checked="true" data-tipo="rca">
+              <span class="motivo__nome">RCA</span><span class="motivo__cod mono">e-mail conferido no WinThor</span>
+            </button>
+            <button type="button" class="motivo tipo" role="radio" aria-checked="false" data-tipo="supervisor">
+              <span class="motivo__nome">Supervisor</span><span class="motivo__cod mono">o TI confere</span>
+            </button>
+          </div>
+        </div>
+        <div class="campo">
+          <label for="c-nome">Nome completo</label>
+          <input id="c-nome" autocomplete="name" maxlength="120" placeholder="Seu nome">
+        </div>
+        <div class="campo">
+          <label for="c-email">E-mail</label>
+          <input id="c-email" type="email" inputmode="email" autocomplete="email" maxlength="120" placeholder="o e-mail do seu cadastro no WinThor">
+          <p class="rca" id="c-rca" aria-live="polite" hidden></p>
+        </div>
+        <div class="campo">
+          <label for="c-senha">Crie uma senha</label>
+          <input id="c-senha" type="password" autocomplete="new-password" maxlength="72" placeholder="mínimo 8 caracteres">
+        </div>
+        <div class="campo">
+          <label for="c-senha2">Repita a senha</label>
+          <input id="c-senha2" type="password" autocomplete="new-password" maxlength="72" placeholder="••••••••">
+        </div>
+        <button class="enviar" type="submit" id="btn-cadastrar">
+          <span class="enviar__texto">Pedir meu acesso</span>
+          <svg class="enviar__seta" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h13M13 6l6 6-6 6" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          <span class="enviar__giro" aria-hidden="true"></span>
+        </button>
+      </form>
+
+      <div class="gate__ok" id="gate-ok" hidden>
+        <div class="ok__selo" aria-hidden="true">
+          <svg viewBox="0 0 52 52"><circle cx="26" cy="26" r="24" fill="none" stroke="currentColor" stroke-width="2.5"/><path d="M15 27l7 7 15-16" fill="none" stroke="currentColor" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        </div>
+        <p class="mono ok__olho">Pedido enviado ao TI</p>
+        <p class="ok__msg" id="gate-ok-msg"></p>
+        <button class="enviar enviar--claro" type="button" data-voltar-login><span class="enviar__texto">Voltar para o login</span></button>
+      </div>
+
+      <div class="aviso" id="gate-erro" role="alert" hidden></div>
+      <p class="gate__rodape mono">Esqueceu a senha? Fale com o TI · cpd@lube.com.br</p>
+    </div>
+  </section>
+
+  <!-- ===================== SISTEMA (depois do login) ===================== -->
+  <div id="tela-app" hidden>
+  <div class="contabar">
+    <span class="contabar__quem"><span class="rca__selo" aria-hidden="true">✓</span>
+      <span><b id="conta-nome"></b> <span class="contabar__tipo mono" id="conta-tipo"></span></span></span>
+    <button class="contabar__sair" type="button" id="btn-sair">Sair</button>
+  </div>
+
   <!-- ===================== FORMULÁRIO ===================== -->
   <section id="tela-form">
     <div class="intro">
@@ -37,20 +131,7 @@
 
       <!-- 01 -->
       <fieldset class="bloco">
-        <legend class="bloco__titulo"><span class="bloco__n mono">01</span>Quem está abrindo</legend>
-        <div class="campo" data-campo="email">
-          <label for="email">Seu e-mail de RCA</label>
-          <input id="email" name="email" type="email" inputmode="email" autocomplete="email"
-                 maxlength="120" placeholder="o e-mail do seu cadastro no WinThor" enterkeyhint="next">
-          <p class="rca" id="rca" aria-live="polite" hidden></p>
-          <p class="campo__ajuda" id="email-ajuda">O comprovante sai em seu nome, para este e-mail. Fica lembrado neste aparelho.</p>
-          <p class="campo__erro" aria-live="polite"></p>
-        </div>
-      </fieldset>
-
-      <!-- 02 -->
-      <fieldset class="bloco">
-        <legend class="bloco__titulo"><span class="bloco__n mono">02</span>Nota fiscal e motivo</legend>
+        <legend class="bloco__titulo"><span class="bloco__n mono">01</span>Nota fiscal e motivo</legend>
 
         <div class="campo campo--nf" data-campo="nf">
           <label for="nf">Nota fiscal</label>
@@ -76,9 +157,9 @@
         </div>
       </fieldset>
 
-      <!-- 03 -->
+      <!-- 02 -->
       <fieldset class="bloco">
-        <legend class="bloco__titulo"><span class="bloco__n mono">03</span>Produto</legend>
+        <legend class="bloco__titulo"><span class="bloco__n mono">02</span>Produto</legend>
 
         <div class="linha">
           <div class="campo campo--cod" data-campo="codprod">
@@ -100,9 +181,9 @@
         <p class="cadastro mono" id="cadastro" aria-live="polite"></p>
       </fieldset>
 
-      <!-- 04 -->
+      <!-- 03 -->
       <fieldset class="bloco">
-        <legend class="bloco__titulo"><span class="bloco__n mono">04</span>Fotos comprobatórias</legend>
+        <legend class="bloco__titulo"><span class="bloco__n mono">03</span>Fotos comprobatórias</legend>
         <p class="bloco__ajuda" id="dica-foto">Do produto ou da nota fiscal — de 1 a 3 fotos.</p>
         <div class="campo" data-campo="fotos">
           <div class="fotos" id="fotos"></div>
@@ -131,7 +212,7 @@
     <p class="ok__msg" id="ok-msg"></p>
 
     <dl class="ok__resumo">
-      <div><dt class="mono">RCA</dt><dd id="ok-rca"></dd></div>
+      <div><dt class="mono">Aberto por</dt><dd id="ok-rca"></dd></div>
       <div><dt class="mono">Motivo</dt><dd id="ok-motivo"></dd></div>
       <div><dt class="mono">Nota fiscal</dt><dd id="ok-nf"></dd></div>
       <div><dt class="mono">Produto</dt><dd id="ok-produto"></dd></div>
@@ -148,11 +229,15 @@
       <span class="enviar__texto">Abrir outro chamado</span>
     </button>
   </section>
+  </div>
 </main>
 
 <footer class="rodape mono">Lube Distribuidora · SAC</footer>
 
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script>
+<script src="config.js"></script>
 <script src="motivos.js"></script>
+<script src="acesso.js"></script>
 <script src="app.js"></script>
 </body>
 </html>

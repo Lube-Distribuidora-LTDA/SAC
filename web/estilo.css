@@ -340,3 +340,39 @@ form{ display:flex; flex-direction:column; gap:14px; }
 @media (prefers-reduced-motion: reduce){
   *, *::before, *::after{ animation-duration:.01ms !important; animation-iteration-count:1 !important; transition-duration:.01ms !important; }
 }
+
+/* ---------- login (Entrar / Primeiro acesso), 2026-10-09 ---------- */
+.carregando{ display:flex; align-items:center; gap:.7rem; justify-content:center; color:var(--muted); padding:80px 0; }
+.carregando .enviar__giro{ display:block; width:18px; height:18px; border-color:rgba(255,255,255,.2); border-top-color:#fff; }
+.gate{ gap:14px; }
+.gate__modos{ display:flex; border-bottom:1px solid var(--line-2); margin:-4px 0 6px; }
+.gate__modo{
+  flex:1; padding:12px 8px; background:none; border:0; border-bottom:2px solid transparent; margin-bottom:-1px;
+  color:var(--muted); font-family:'Archivo',sans-serif; font-weight:700; font-size:.98rem;
+  transition:color .25s, border-color .25s;
+}
+.gate__modo:hover{ color:#C9CFE2; }
+.gate__modo.is-on{ color:#fff; border-bottom-color:var(--red); }
+.gate__form{ display:none; flex-direction:column; gap:16px; }
+.gate__form.is-on{ display:flex; animation:sobe .4s var(--ease) both; }
+.gate__ok{ text-align:center; padding:6px 0 4px; }
+.gate__ok .ok__msg{ margin:8px auto 18px; }
+.gate__rodape{ text-align:center; color:var(--muted-d); font-size:.58rem; margin:2px 0 0; }
+.tipos{ display:grid; grid-template-columns:1fr 1fr; gap:8px; }
+.tipo{ min-height:58px; }
+.tipo .motivo__nome{ font-size:1rem; }
+
+/* conta logada, em cima do formulário */
+.contabar{
+  display:flex; align-items:center; justify-content:space-between; gap:12px; margin-top:22px;
+  padding:10px 12px; border:1px solid var(--line); border-radius:14px; background:var(--card);
+}
+.contabar__quem{ display:flex; align-items:center; gap:.6rem; min-width:0; color:#fff; font-size:.92rem; }
+.contabar__quem b{ font-weight:600; }
+.contabar__tipo{ color:var(--green); font-size:.62rem; margin-left:.35rem; }
+.contabar__sair{
+  flex:none; background:none; border:1px solid var(--line-2); border-radius:10px; color:#C9CFE2;
+  padding:7px 12px; font-size:.82rem; font-weight:600;
+}
+.contabar__sair:hover{ border-color:var(--red); color:#fff; }
+#tela-app .intro{ padding-top:22px; }

@@ -7,9 +7,9 @@
  *   busca a nova por trás. Sem cadastro, o RCA escreve o nome à mão.
  * - Fotos: reduzidas aqui (lado maior 1600 px, JPEG) antes de subir — uma foto
  *   de celular tem 4 MB e a Vercel aceita 4,5 MB por envio.
- * - RCA: a tela é pública (fica na tela de login do Painel Lube), então o
- *   e-mail precisa ser de um RCA ativo no WinThor. A tela confere assim que o
- *   e-mail é digitado (/api/rca) e mostra o nome; o servidor confere de novo.
+ * - Login (desde 2026-10-09): quem abre o chamado é a conta logada no SAC
+ *   (acesso.js), liberada pelo TI. O comprovante vai para o e-mail dela; não há
+ *   mais campo de e-mail. As chamadas à API levam o token da sessão.
  * - NF: precisa existir no WinThor e ter sido emitida até 1 mês atrás (regra do
  *   Júlio, 2026-10-09). Conferida ao digitar (/api/nf), com emissão e cliente
  *   na tela; o servidor confere de novo no envio.
@@ -23,9 +23,7 @@
   var LADO_MAX = 1600;
   var QUALIDADE = 0.82;
   var MIN_DETALHE = 15;
-  var CHAVE_EMAIL = "sac.email";
   var CHAVE_PRODUTOS = "sac.produtos.v1";
-  var RE_EMAIL = /^[^\s@<>(),;:"\[\]\\]+@[^\s@<>(),;:"\[\]\\]+\.[a-z]{2,}$/i;
   var DICA_PADRAO = "Do produto ou da nota fiscal — de 1 a 3 fotos.";
 
   var $ = function (s) { return document.querySelector(s); };
@@ -33,10 +31,9 @@
     motivo: null, fotos: [], processando: 0,
     produtos: null, mapa: null, cadastroFalhou: false, produtoAuto: false,
     enviando: false, sugestoes: [], marcada: -1,
-    rca: { email: "", situacao: "", codusur: null, nome: "", mensagem: "" }, rcaTimer: null,
     nf: { nf: "", codusur: null, situacao: "", info: null, mensagem: "" }, nfTimer: null,
   };
-  var CAMPOS = ["email", "nf", "motivo", "detalhe", "codprod", "produto", "fotos"];
+  var CAMPOS = ["nf", "motivo", "detalhe", "codprod", "produto", "fotos"];
 
   /* armazenamento do aparelho: pode não existir (aba anônima, bloqueio) */
   function ler(k) { try { return localStorage.getItem(k); } catch (e) { return null; } }
@@ -74,56 +71,18 @@
   }
   function texto(s) { var d = document.createElement("div"); d.textContent = s == null ? "" : String(s); return d.innerHTML; }
 
-  /* ================= RCA ================= */
-  function mostrarRca() {
-    var el = $("#rca"), r = estado.rca;
-    $("#email-ajuda").hidden = r.situacao === "ok";
-    if (r.situacao === "ok") {
-      el.className = "rca is-ok";
-      el.innerHTML = '<span class="rca__selo" aria-hidden="true">✓</span><span>RCA <b class="rca__cod">' +
-        texto(r.codusur) + "</b> · " + texto(r.nome) + "</span>";
-      el.hidden = false;
-      limparErro("email");
-    } else if (r.situacao === "buscando") {
-      el.className = "rca is-buscando";
-      el.innerHTML = '<span class="enviar__giro rca__giro" aria-hidden="true"></span><span>Conferindo no cadastro de RCAs…</span>';
-      el.hidden = false;
-    } else if (r.situacao === "falha") {
-      el.className = "rca is-aviso";
-      el.textContent = "Não consegui conferir o cadastro agora. Pode seguir preenchendo — a conferência é refeita no envio.";
-      el.hidden = false;
-    } else {
-      el.hidden = true;
-      if (r.situacao === "nao") marcarErro("email", r.mensagem);
-    }
+  /* ================= sessão ================= */
+  // fetch com o token da conta logada; sessão vencida volta ao login sem perder o formulário
+  function comToken(opcoes) {
+    return window.SAC_ACESSO.token().then(function (t) {
+      opcoes.headers = opcoes.headers || {};
+      if (t) opcoes.headers.Authorization = "Bearer " + t;
+      return opcoes;
+    });
   }
-  function conferirRca() {
-    var email = $("#email").value.trim().toLowerCase();
-    clearTimeout(estado.rcaTimer);
-    if (!RE_EMAIL.test(email)) { estado.rca = { email: "", situacao: "" }; mostrarRca(); return; }
-    if (estado.rca.email === email && estado.rca.situacao && estado.rca.situacao !== "falha") { mostrarRca(); return; }
-    estado.rca = { email: email, situacao: "buscando" };
-    mostrarRca();
-    fetch("/api/rca", {
-      method: "POST", headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ email: email }), cache: "no-store",
-    })
-      .then(function (r) { return r.json().catch(function () { return {}; }).then(function (j) { return { r: r, j: j }; }); })
-      .then(function (x) {
-        if ($("#email").value.trim().toLowerCase() !== email) return; // digitou outra coisa no meio
-        if (x.r.ok && x.j.ok) {
-          estado.rca = { email: email, situacao: "ok", codusur: x.j.codusur, nome: x.j.nome };
-          if ($("#nf").value) conferirNfTela();
-        }
-        else if (x.r.status === 404) estado.rca = { email: email, situacao: "nao", mensagem: x.j.mensagem };
-        else estado.rca = { email: email, situacao: "falha" };
-        mostrarRca();
-      })
-      .catch(function () {
-        if ($("#email").value.trim().toLowerCase() !== email) return;
-        estado.rca = { email: email, situacao: "falha" };
-        mostrarRca();
-      });
+  function sessaoCaiu(status) {
+    if (status === 401 || status === 403) { window.SAC_ACESSO.expirou(); return true; }
+    return false;
   }
 
   /* ================= NF ================= */
@@ -151,19 +110,22 @@
   }
   function conferirNfTela() {
     var nf = $("#nf").value.replace(/\D/g, "");
-    var codusur = estado.rca.situacao === "ok" ? estado.rca.codusur : null;
+    var c = window.SAC_ACESSO.conta();
+    var codusur = c && c.codusur ? c.codusur : null;
     clearTimeout(estado.nfTimer);
     if (nf.length < 3) { estado.nf = { nf: "", situacao: "" }; mostrarNf(); return; }
     if (estado.nf.nf === nf && estado.nf.codusur === codusur && estado.nf.situacao && estado.nf.situacao !== "falha") { mostrarNf(); return; }
     estado.nf = { nf: nf, codusur: codusur, situacao: "buscando" };
     mostrarNf();
-    fetch("/api/nf", {
+    comToken({
       method: "POST", headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ nf: nf, codusur: codusur }), cache: "no-store",
+      body: JSON.stringify({ nf: nf }), cache: "no-store",
     })
+      .then(function (op) { return fetch("/api/nf", op); })
       .then(function (r) { return r.json().catch(function () { return {}; }).then(function (j) { return { r: r, j: j }; }); })
       .then(function (x) {
         if ($("#nf").value.replace(/\D/g, "") !== nf) return; // digitou outra coisa no meio
+        if (sessaoCaiu(x.r.status)) { estado.nf = { nf: "", situacao: "" }; mostrarNf(); return; }
         if (x.r.ok && x.j.ok) estado.nf = { nf: nf, codusur: codusur, situacao: "ok", info: x.j.nf };
         else if (x.r.status === 422) estado.nf = { nf: nf, codusur: codusur, situacao: "recusada", mensagem: x.j.mensagem, info: x.j.nf };
         else estado.nf = { nf: nf, codusur: codusur, situacao: "falha" };
@@ -194,7 +156,7 @@
   function escolherMotivo(cod) {
     estado.motivo = cod;
     var m = null;
-    document.querySelectorAll(".motivo").forEach(function (b) {
+    document.querySelectorAll(".motivos .motivo").forEach(function (b) {
       var on = Number(b.dataset.cod) === cod;
       b.classList.toggle("is-on", on);
       b.setAttribute("aria-checked", on ? "true" : "false");
@@ -408,7 +370,6 @@
       detalhe: $("#detalhe").value.trim(),
       codprod: $("#codprod").value.replace(/\D/g, ""),
       produto: $("#produto").value.trim(),
-      email: $("#email").value.trim().toLowerCase(),
       fotos: estado.fotos.map(function (f) { return f.dados; }),
     };
   }
@@ -421,8 +382,6 @@
     if (!/^\d{1,8}$/.test(d.codprod)) e.codprod = "Informe o código do produto.";
     if (d.produto.length < 2) e.produto = "Informe o produto.";
     if (!d.fotos.length) e.fotos = "Envie pelo menos uma foto do produto ou da nota fiscal.";
-    if (!RE_EMAIL.test(d.email)) e.email = "Informe o seu e-mail de RCA.";
-    else if (estado.rca.email === d.email && estado.rca.situacao === "nao") e.email = estado.rca.mensagem;
     return e;
   }
   function emEnvio(sim) {
@@ -442,24 +401,22 @@
     var erros = validar(d);
     if (Object.keys(erros).length) { mostrarErros(erros); return; }
 
-    gravar(CHAVE_EMAIL, d.email);
     emEnvio(true);
-    fetch("/api/enviar", {
+    comToken({
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(d),
       cache: "no-store",
     })
+      .then(function (op) { return fetch("/api/enviar", op); })
       .then(function (r) {
         return r.json().catch(function () { return {}; }).then(function (j) { return { r: r, j: j }; });
       })
       .then(function (x) {
         if (x.r.ok && x.j.ok) return mostrarEnviado(x.j, d);
         if (x.j.campos) { mostrarErros(x.j.campos); return; }
-        if (x.r.status === 401 || x.r.status === 403) {
-          aviso("<strong>Sua sessão expirou.</strong> Entre de novo pelo Painel Lube e envie outra vez — os dados continuam aqui.");
-          return;
-        }
+        if (x.j.erro === "rca") { aviso("<strong>" + texto(x.j.mensagem) + "</strong>"); return; }
+        if (sessaoCaiu(x.r.status)) return;
         if (x.r.status === 413) {
           aviso("<strong>As fotos ficaram grandes demais.</strong> Tire uma delas e tente de novo.");
           return;
@@ -482,7 +439,7 @@
     $("#ok-msg").innerHTML = j.previa
       ? "Este seria o comprovante enviado em nome de <strong>" + texto(nome) + "</strong>."
       : "O comprovante saiu em seu nome, <strong>" + texto(nome.split(" ")[0]) + "</strong>. Confira a caixa de entrada (e o spam, na primeira vez).";
-    $("#ok-rca").textContent = j.rca ? j.rca.codusur + " · " + j.rca.nome : "";
+    $("#ok-rca").textContent = !j.rca ? "" : (j.rca.codusur ? "RCA " + j.rca.codusur : "Supervisor") + " · " + j.rca.nome;
     $("#ok-para").textContent = j.para;
     $("#ok-motivo").textContent = nomeMotivo(d.motivo);
     $("#ok-nf").textContent = d.nf + (j.nf && j.nf.emissao ? " · emitida em " + j.nf.emissao : "");
@@ -498,15 +455,12 @@
   }
 
   function novoChamado() {
-    var email = $("#email").value;
     $("#form").reset();
-    $("#email").value = email;
     estado.motivo = null; estado.fotos = []; estado.produtoAuto = false;
-    document.querySelectorAll(".motivo").forEach(function (b) { b.classList.remove("is-on"); b.setAttribute("aria-checked", "false"); });
+    document.querySelectorAll(".motivos .motivo").forEach(function (b) { b.classList.remove("is-on"); b.setAttribute("aria-checked", "false"); });
     CAMPOS.forEach(limparErro);
     estado.nf = { nf: "", situacao: "" };
     mostrarNf();
-    mostrarRca();
     $("#dica-foto").textContent = DICA_PADRAO;
     situacaoCadastro("", "");
     contar();
@@ -515,7 +469,7 @@
     $("#tela-ok").hidden = true;
     $("#tela-form").hidden = false;
     window.scrollTo({ top: 0, behavior: "smooth" });
-    $(estado.rca.situacao === "ok" ? "#nf" : "#email").focus({ preventScroll: true });
+    $("#nf").focus({ preventScroll: true });
   }
 
   function contar() {
@@ -529,8 +483,6 @@
   function iniciar() {
     montarMotivos();
     desenharFotos();
-    var email = ler(CHAVE_EMAIL);
-    if (email) { $("#email").value = email; conferirRca(); }
     carregarProdutos();
 
     $("#nf").addEventListener("input", function () {
@@ -543,14 +495,6 @@
     $("#nf").addEventListener("blur", conferirNfTela);
     $("#detalhe").addEventListener("input", function () { contar(); if (this.value.trim().length >= MIN_DETALHE) limparErro("detalhe"); });
     $("#codprod").addEventListener("input", conferirCodigo);
-    $("#email").addEventListener("input", function () {
-      limparErro("email");
-      estado.rca = { email: "", situacao: "" };
-      mostrarRca();
-      clearTimeout(estado.rcaTimer);
-      estado.rcaTimer = setTimeout(conferirRca, 600);
-    });
-    $("#email").addEventListener("blur", conferirRca);
 
     var prod = $("#produto");
     prod.addEventListener("input", function () { limparErro("produto"); sugerir(); });
@@ -582,6 +526,9 @@
     $("#form").addEventListener("submit", enviar);
     $("#novo").addEventListener("click", novoChamado);
   }
+
+  // acesso.js avisa quando a conta entra: se já havia NF digitada, confere de novo
+  window.SAC_APP = { pronto: function () { if ($("#nf").value) conferirNfTela(); } };
 
   if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", iniciar);
   else iniciar();
