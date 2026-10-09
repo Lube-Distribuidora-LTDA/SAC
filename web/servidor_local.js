@@ -60,6 +60,7 @@ const rotas = {
   "/api/produtos": require(path.join(WEB, "api", "produtos.js")),
   "/api/enviar": require(path.join(WEB, "api", "enviar.js")),
   "/api/rca": require(path.join(WEB, "api", "rca.js")),
+  "/api/nf": require(path.join(WEB, "api", "nf.js")),
 };
 const TIPOS = {
   ".html": "text/html; charset=utf-8", ".js": "text/javascript; charset=utf-8", ".css": "text/css; charset=utf-8",

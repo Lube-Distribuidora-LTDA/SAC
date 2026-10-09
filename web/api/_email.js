@@ -192,7 +192,8 @@ function layout(conteudo, contato) {
 /**
  * Monta o e-mail de comprovante.
  * d = { protocolo, quando: Date, nf, motivo: {cod, rotulo, winthor}, detalhe,
- *       codprod, produto, email, fotos: [{cid}], rca: {cod, nome, primeiro} }
+ *       codprod, produto, email, fotos: [{cid}], rca: {cod, nome, primeiro},
+ *       nfInfo: {emissao, filial, codcli, cliente} (da conferência no WinThor) }
  */
 function montarEmail(d) {
   const quando = dataHora(d.quando);
@@ -216,7 +217,12 @@ function montarEmail(d) {
 
     ${tabela([
       ["RCA", `<span style="font-family:Consolas,'Courier New',monospace;font-size:15px;">${esc(d.rca.cod)}</span> &middot; ${esc(d.rca.nome)}`],
-      ["Nota fiscal", `<span style="font-family:Consolas,'Courier New',monospace;font-size:15px;">${esc(d.nf)}</span>`],
+      ["Nota fiscal", `<span style="font-family:Consolas,'Courier New',monospace;font-size:15px;">${esc(d.nf)}</span>` +
+        (d.nfInfo ? ` <span style="color:${CINZA};font-weight:500;font-size:13px;">&middot; emitida em ${esc(d.nfInfo.emissao)}` +
+                    (d.nfInfo.filial != null ? ` &middot; filial ${esc(d.nfInfo.filial)}` : "") + `</span>` : "")],
+      ...(d.nfInfo && d.nfInfo.cliente
+        ? [["Cliente", `<span style="font-family:Consolas,'Courier New',monospace;font-size:15px;">${esc(d.nfInfo.codcli)}</span> &middot; ${esc(d.nfInfo.cliente)}`]]
+        : []),
       ["Cód. produto", `<span style="font-family:Consolas,'Courier New',monospace;font-size:15px;">${esc(d.codprod)}</span>`],
       ["Produto", esc(d.produto)],
       ["E-mail do RCA", `<a href="mailto:${esc(d.email)}" style="color:${AZUL};text-decoration:none;">${esc(d.email)}</a>`],
@@ -238,7 +244,8 @@ function montarEmail(d) {
     "",
     `RCA: ${d.rca.cod} — ${d.rca.nome}`,
     `Motivo: ${d.motivo.rotulo} (WinThor, assunto ${d.motivo.cod} — ${d.motivo.winthor})`,
-    `Nota fiscal: ${d.nf}`,
+    `Nota fiscal: ${d.nf}` + (d.nfInfo ? ` (emitida em ${d.nfInfo.emissao}${d.nfInfo.filial != null ? `, filial ${d.nfInfo.filial}` : ""})` : ""),
+    ...(d.nfInfo && d.nfInfo.cliente ? [`Cliente: ${d.nfInfo.codcli} — ${d.nfInfo.cliente}`] : []),
     `Cód. produto: ${d.codprod}`,
     `Produto: ${d.produto}`,
     `E-mail do RCA: ${d.email}`,

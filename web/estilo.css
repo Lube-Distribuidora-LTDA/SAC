@@ -148,7 +148,8 @@ form{ display:flex; flex-direction:column; gap:14px; }
   box-shadow:0 0 0 4px rgba(42,65,200,.28);
 }
 .campo--nf input, .campo--cod input{ font-family:'JetBrains Mono',Consolas,monospace; font-weight:600; letter-spacing:.06em; }
-.campo--nf{ max-width:260px; }
+.campo--nf{ max-width:none; }
+.campo--nf input{ max-width:260px; }
 
 .campo__pe{ display:flex; justify-content:space-between; align-items:flex-start; gap:1rem; }
 .contador{ color:var(--muted-d); font-size:.62rem; white-space:nowrap; padding-top:2px; }
@@ -160,14 +161,14 @@ form{ display:flex; flex-direction:column; gap:14px; }
 .campo.tem-erro .motivos{ outline:1px dashed rgba(255,107,114,.6); outline-offset:6px; border-radius:12px; }
 
 /* RCA reconhecido pelo e-mail */
-.rca{
+.rca, .conf{
   margin:0; display:flex; align-items:center; gap:.6rem;
   padding:10px 12px; border-radius:12px; border:1px solid var(--line);
   font-size:.92rem; color:var(--muted);
   animation:sobe .4s var(--ease) both;
 }
-.rca.is-ok{ color:#fff; border-color:rgba(52,232,158,.45); background:rgba(52,232,158,.08); }
-.rca.is-aviso{ color:#FFE2A8; border-color:rgba(255,179,64,.45); background:rgba(255,179,64,.08); }
+.rca.is-ok, .conf.is-ok{ color:#fff; border-color:rgba(52,232,158,.45); background:rgba(52,232,158,.08); }
+.rca.is-aviso, .conf.is-aviso{ color:#FFE2A8; border-color:rgba(255,179,64,.45); background:rgba(255,179,64,.08); }
 .rca__selo{
   flex:none; display:grid; place-items:center; width:22px; height:22px; border-radius:50%;
   background:var(--green); color:var(--blue-ink); font-size:.75rem; font-weight:700;

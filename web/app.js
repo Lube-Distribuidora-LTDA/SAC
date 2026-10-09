@@ -10,6 +10,9 @@
  * - RCA: a tela é pública (fica na tela de login do Painel Lube), então o
  *   e-mail precisa ser de um RCA ativo no WinThor. A tela confere assim que o
  *   e-mail é digitado (/api/rca) e mostra o nome; o servidor confere de novo.
+ * - NF: precisa existir no WinThor e ter sido emitida até 1 mês atrás (regra do
+ *   Júlio, 2026-10-09). Conferida ao digitar (/api/nf), com emissão e cliente
+ *   na tela; o servidor confere de novo no envio.
  * - Envio: se falhar, os dados ficam na tela e a mensagem diz o que houve.
  */
 (function () {
@@ -31,6 +34,7 @@
     produtos: null, mapa: null, cadastroFalhou: false, produtoAuto: false,
     enviando: false, sugestoes: [], marcada: -1,
     rca: { email: "", situacao: "", codusur: null, nome: "", mensagem: "" }, rcaTimer: null,
+    nf: { nf: "", codusur: null, situacao: "", info: null, mensagem: "" }, nfTimer: null,
   };
   var CAMPOS = ["email", "nf", "motivo", "detalhe", "codprod", "produto", "fotos"];
 
@@ -107,7 +111,10 @@
       .then(function (r) { return r.json().catch(function () { return {}; }).then(function (j) { return { r: r, j: j }; }); })
       .then(function (x) {
         if ($("#email").value.trim().toLowerCase() !== email) return; // digitou outra coisa no meio
-        if (x.r.ok && x.j.ok) estado.rca = { email: email, situacao: "ok", codusur: x.j.codusur, nome: x.j.nome };
+        if (x.r.ok && x.j.ok) {
+          estado.rca = { email: email, situacao: "ok", codusur: x.j.codusur, nome: x.j.nome };
+          if ($("#nf").value) conferirNfTela();
+        }
         else if (x.r.status === 404) estado.rca = { email: email, situacao: "nao", mensagem: x.j.mensagem };
         else estado.rca = { email: email, situacao: "falha" };
         mostrarRca();
@@ -116,6 +123,56 @@
         if ($("#email").value.trim().toLowerCase() !== email) return;
         estado.rca = { email: email, situacao: "falha" };
         mostrarRca();
+      });
+  }
+
+  /* ================= NF ================= */
+  function mostrarNf() {
+    var el = $("#nf-conf"), n = estado.nf;
+    if (n.situacao === "ok") {
+      var i = n.info || {};
+      el.className = "conf is-ok";
+      el.innerHTML = '<span class="rca__selo" aria-hidden="true">✓</span><span>Emitida em <b class="rca__cod">' +
+        texto(i.emissao) + "</b>" + (i.cliente ? " · " + texto(i.cliente) : "") + "</span>";
+      el.hidden = false;
+      limparErro("nf");
+    } else if (n.situacao === "buscando") {
+      el.className = "conf";
+      el.innerHTML = '<span class="enviar__giro rca__giro" aria-hidden="true"></span><span>Conferindo a NF no WinThor…</span>';
+      el.hidden = false;
+    } else if (n.situacao === "falha") {
+      el.className = "conf is-aviso";
+      el.textContent = "Não consegui conferir a NF agora. Pode seguir preenchendo — a conferência é refeita no envio.";
+      el.hidden = false;
+    } else {
+      el.hidden = true;
+      if (n.situacao === "recusada") marcarErro("nf", n.mensagem);
+    }
+  }
+  function conferirNfTela() {
+    var nf = $("#nf").value.replace(/\D/g, "");
+    var codusur = estado.rca.situacao === "ok" ? estado.rca.codusur : null;
+    clearTimeout(estado.nfTimer);
+    if (nf.length < 3) { estado.nf = { nf: "", situacao: "" }; mostrarNf(); return; }
+    if (estado.nf.nf === nf && estado.nf.codusur === codusur && estado.nf.situacao && estado.nf.situacao !== "falha") { mostrarNf(); return; }
+    estado.nf = { nf: nf, codusur: codusur, situacao: "buscando" };
+    mostrarNf();
+    fetch("/api/nf", {
+      method: "POST", headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ nf: nf, codusur: codusur }), cache: "no-store",
+    })
+      .then(function (r) { return r.json().catch(function () { return {}; }).then(function (j) { return { r: r, j: j }; }); })
+      .then(function (x) {
+        if ($("#nf").value.replace(/\D/g, "") !== nf) return; // digitou outra coisa no meio
+        if (x.r.ok && x.j.ok) estado.nf = { nf: nf, codusur: codusur, situacao: "ok", info: x.j.nf };
+        else if (x.r.status === 422) estado.nf = { nf: nf, codusur: codusur, situacao: "recusada", mensagem: x.j.mensagem, info: x.j.nf };
+        else estado.nf = { nf: nf, codusur: codusur, situacao: "falha" };
+        mostrarNf();
+      })
+      .catch(function () {
+        if ($("#nf").value.replace(/\D/g, "") !== nf) return;
+        estado.nf = { nf: nf, codusur: codusur, situacao: "falha" };
+        mostrarNf();
       });
   }
 
@@ -358,6 +415,7 @@
   function validar(d) {
     var e = {};
     if (!/^\d{1,10}$/.test(d.nf)) e.nf = "Informe o número da nota fiscal.";
+    else if (estado.nf.nf === d.nf && estado.nf.situacao === "recusada") e.nf = estado.nf.mensagem;
     if (!d.motivo) e.motivo = "Escolha o motivo.";
     if (d.detalhe.length < MIN_DETALHE) e.detalhe = "Descreva com detalhes (pelo menos " + MIN_DETALHE + " caracteres).";
     if (!/^\d{1,8}$/.test(d.codprod)) e.codprod = "Informe o código do produto.";
@@ -427,7 +485,7 @@
     $("#ok-rca").textContent = j.rca ? j.rca.codusur + " · " + j.rca.nome : "";
     $("#ok-para").textContent = j.para;
     $("#ok-motivo").textContent = nomeMotivo(d.motivo);
-    $("#ok-nf").textContent = d.nf;
+    $("#ok-nf").textContent = d.nf + (j.nf && j.nf.emissao ? " · emitida em " + j.nf.emissao : "");
     $("#ok-produto").textContent = d.codprod + " · " + d.produto;
     $("#ok-fotos").textContent = d.fotos.length + (d.fotos.length === 1 ? " foto" : " fotos");
     $("#ok-previa").hidden = !j.previa;
@@ -446,6 +504,8 @@
     estado.motivo = null; estado.fotos = []; estado.produtoAuto = false;
     document.querySelectorAll(".motivo").forEach(function (b) { b.classList.remove("is-on"); b.setAttribute("aria-checked", "false"); });
     CAMPOS.forEach(limparErro);
+    estado.nf = { nf: "", situacao: "" };
+    mostrarNf();
     mostrarRca();
     $("#dica-foto").textContent = DICA_PADRAO;
     situacaoCadastro("", "");
@@ -475,7 +535,12 @@
 
     $("#nf").addEventListener("input", function () {
       var v = this.value.replace(/\D/g, ""); if (this.value !== v) this.value = v; limparErro("nf");
+      estado.nf = { nf: "", situacao: "" };
+      mostrarNf();
+      clearTimeout(estado.nfTimer);
+      estado.nfTimer = setTimeout(conferirNfTela, 700);
     });
+    $("#nf").addEventListener("blur", conferirNfTela);
     $("#detalhe").addEventListener("input", function () { contar(); if (this.value.trim().length >= MIN_DETALHE) limparErro("detalhe"); });
     $("#codprod").addEventListener("input", conferirCodigo);
     $("#email").addEventListener("input", function () {

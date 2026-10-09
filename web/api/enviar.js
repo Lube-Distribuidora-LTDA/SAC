@@ -9,6 +9,7 @@
  *
  * Tudo é conferido de novo aqui: a tela ajuda, mas quem garante é o servidor.
  * O e-mail precisa ser de um RCA ativo no WinThor (_rca.js) — a tela é pública.
+ * A NF precisa existir no WinThor e ter sido emitida até 1 mês atrás (_nf.js).
  * Se o e-mail não sair, a resposta diz que não saiu — nunca um "enviado" falso.
  */
 const crypto = require("crypto");
@@ -16,6 +17,7 @@ const MOTIVOS = require("../motivos.js");
 const { montarEmail } = require("./_email.js");
 const { enviar } = require("./_correio.js");
 const { buscarRca, nomeBonito, primeiroNome, MSG_NAO_CADASTRADO } = require("./_rca.js");
+const { conferirNf } = require("./_nf.js");
 
 const MAX_FOTOS = 3;
 const MAX_BYTES_FOTO = 3 * 1024 * 1024;
@@ -126,6 +128,22 @@ module.exports = async (req, res) => {
   }
   const nomeRca = nomeBonito(rca.nome);
 
+  // a NF existe no WinThor e foi emitida até 1 mês atrás? (regra do Júlio, 2026-10-09)
+  let conf;
+  try {
+    conf = await conferirNf(d.nf, rca.codusur);
+  } catch (e) {
+    console.error("SAC: falha ao conferir a NF", e && e.message);
+    return res.status(502).json({
+      erro: "falha_nf",
+      mensagem: "Não consegui conferir a nota fiscal no WinThor agora. Nada foi enviado — seus dados continuam na tela, tente de novo em instantes.",
+      detalhe: String(e && e.message ? e.message : e),
+    });
+  }
+  if (!conf.ok) {
+    return res.status(400).json({ erro: "dados_invalidos", mensagem: "Confira os campos destacados.", campos: { nf: conf.mensagem } });
+  }
+
   const agora = new Date();
   const protocolo = gerarProtocolo(agora);
   const anexos = d.fotos.map((f, i) => ({
@@ -136,7 +154,7 @@ module.exports = async (req, res) => {
   }));
 
   const { assunto, html, texto } = montarEmail({
-    protocolo, quando: agora, nf: d.nf, motivo: d.motivo, detalhe: d.detalhe,
+    protocolo, quando: agora, nf: d.nf, nfInfo: conf.nf, motivo: d.motivo, detalhe: d.detalhe,
     codprod: d.codprod, produto: d.produto, email: d.email, fotos: anexos,
     rca: { cod: rca.codusur, nome: nomeRca, primeiro: primeiroNome(rca.nome) },
   });
@@ -157,6 +175,7 @@ module.exports = async (req, res) => {
     protocolo,
     para: d.email,
     rca: { codusur: rca.codusur, nome: nomeRca },
+    nf: conf.nf,
     copia: r.copia,
     copiaEmEnviados: r.copiaEmEnviados,
     previa: r.previa || null,
