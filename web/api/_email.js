@@ -1,5 +1,5 @@
 /**
- * _email.js — o e-mail que o SAQ manda para o RCA.
+ * _email.js — o e-mail que o SAC manda para o RCA.
  *
  * Mesma pegada do e-mail de cobrança do Gestão TI (faixa azul com o nome do
  * assistente, filete azul→vermelho, tabela zebrada, rodapé cinza), com mais
@@ -46,15 +46,15 @@ function dataHora(d) {
 
 /* ---------- peças ---------- */
 
-function faixaSaq(contato) {
+function faixaSac(contato) {
   return `
   <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="border-collapse:collapse;background:#ffffff;">
     <tr>
       <td bgcolor="${AZUL}" style="background:${AZUL};background-image:linear-gradient(135deg,${AZUL_NOITE} 0%,${AZUL} 55%,${AZUL_VIVO} 100%);
                  padding:20px 28px 18px;border-radius:0 0 40px 0;white-space:nowrap;">
-        <div style="color:#ffffff;font-family:${FONTE};font-size:30px;line-height:30px;font-weight:800;letter-spacing:3px;">SAQ</div>
+        <div style="color:#ffffff;font-family:${FONTE};font-size:30px;line-height:30px;font-weight:800;letter-spacing:3px;">SAC</div>
         <div style="color:#aab6ff;font-family:${FONTE};font-size:10px;line-height:14px;font-weight:700;letter-spacing:2px;padding-top:5px;">
-          CHAMADO DO RCA&nbsp;&nbsp;<span style="color:${VERMELHO};">&#9679;</span>&nbsp;&nbsp;SAC
+          <span style="color:${VERMELHO};">&#9679;</span>&nbsp;&nbsp;CHAMADO DO RCA
         </div>
       </td>
       <td style="padding:16px 18px;white-space:nowrap;" valign="middle">
@@ -168,20 +168,20 @@ function layout(conteudo, contato) {
 <html lang="pt-BR"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="color-scheme" content="light only"><meta name="supported-color-schemes" content="light">
-<title>SAQ</title></head>
+<title>SAC</title></head>
 <body style="margin:0;padding:0;background:#eef1f8;">
   <table role="presentation" width="100%" cellpadding="0" cellspacing="0" bgcolor="#eef1f8" style="background:#eef1f8;padding:28px 12px;">
     <tr><td align="center">
       <table role="presentation" width="600" cellpadding="0" cellspacing="0" bgcolor="#ffffff"
              style="max-width:600px;width:100%;background:#ffffff;border-radius:16px;overflow:hidden;box-shadow:0 8px 30px rgba(14,23,66,.16);">
-        <tr><td style="padding:0;">${faixaSaq(contato)}</td></tr>
+        <tr><td style="padding:0;">${faixaSac(contato)}</td></tr>
         <tr><td height="4" bgcolor="${AZUL}" style="height:4px;line-height:4px;font-size:0;background:${AZUL};background-image:linear-gradient(90deg,${AZUL},${VERMELHO});">&nbsp;</td></tr>
         <tr><td style="padding:30px 32px 32px;color:${TINTA};font-family:${FONTE};font-size:15px;line-height:1.65;">
           ${conteudo}
         </td></tr>
         <tr><td bgcolor="#f5f7fc" style="background:#f5f7fc;border-top:1px solid ${LINHA};padding:20px 32px;color:${CINZA};font-family:${FONTE};font-size:12px;line-height:1.6;">
-          <strong style="color:${AZUL};">Lube Distribuidora</strong> &middot; SAQ<br>
-          Mensagem automática do SAQ, enviada em nome do RCA para o próprio e-mail. Guarde-a: é o comprovante do chamado.
+          <strong style="color:${AZUL};">Lube Distribuidora</strong> &middot; SAC<br>
+          Mensagem automática do SAC, enviada em nome do RCA para o próprio e-mail. Guarde-a: é o comprovante do chamado.
         </td></tr>
       </table>
     </td></tr>
@@ -196,17 +196,17 @@ function layout(conteudo, contato) {
  */
 function montarEmail(d) {
   const quando = dataHora(d.quando);
-  const assunto = `[${d.protocolo}] SAQ registrado — ${d.motivo.rotulo} — NF ${d.nf}`;
+  const assunto = `[${d.protocolo}] Chamado registrado — ${d.motivo.rotulo} — NF ${d.nf}`;
 
   const html = layout(`
     <table role="presentation" width="100%" cellpadding="0" cellspacing="0"><tr>
-      <td>${selo("SAQ registrado", "#059669")}</td>
+      <td>${selo("Chamado registrado", "#059669")}</td>
       <td align="right" style="color:${CINZA};font-family:${FONTE};font-size:12px;">${esc(quando)}</td>
     </tr></table>
 
     <p style="margin:18px 0 0;">Olá, <strong>${esc(d.rca.primeiro)}</strong>!</p>
     <p style="margin:8px 0 0;">
-      Seu SAQ foi registrado e este e-mail é o seu <strong>comprovante</strong>.
+      Seu chamado foi registrado e este e-mail é o seu <strong>comprovante</strong>.
       Guarde o número do protocolo — ele identifica o chamado em qualquer conversa com o SAC.
     </p>
 
@@ -233,7 +233,7 @@ function montarEmail(d) {
   `, d.email);
 
   const texto = [
-    `SAQ REGISTRADO — protocolo ${d.protocolo}`,
+    `CHAMADO REGISTRADO — protocolo ${d.protocolo}`,
     `Aberto em ${quando}`,
     "",
     `RCA: ${d.rca.cod} — ${d.rca.nome}`,
@@ -248,7 +248,7 @@ function montarEmail(d) {
     "",
     `Fotos comprobatórias: ${d.fotos.length} (em anexo)`,
     "",
-    "Mensagem automática do SAQ — Lube Distribuidora, enviada em nome do RCA para o próprio e-mail.",
+    "Mensagem automática do SAC — Lube Distribuidora, enviada em nome do RCA para o próprio e-mail.",
   ].join("\n");
 
   return { assunto, html, texto };

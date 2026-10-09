@@ -1,5 +1,5 @@
 /**
- * POST /api/enviar — recebe o SAQ preenchido pelo RCA e manda o comprovante
+ * POST /api/enviar — recebe o SAC preenchido pelo RCA e manda o comprovante
  * para o e-mail dele, em nome dele: remetente com o nome do RCA, resposta para
  * o próprio RCA — "como se ele mesmo estivesse enviando para ele".
  *
@@ -45,9 +45,9 @@ function lerFoto(dataUrl) {
 }
 
 /**
- * SAQ-AAMMDD-XXXXX: data de Brasília + 5 caracteres sem ambiguidade (sem 0/O, 1/I/L).
- * 31^5 = 28 milhões de combinações por dia: com 50 SAQs por dia, a chance de dois
- * protocolos iguais num ano é de ~1,6%. Quando o SAQ ganhar banco, vira sequencial.
+ * SAC-AAMMDD-XXXXX: data de Brasília + 5 caracteres sem ambiguidade (sem 0/O, 1/I/L).
+ * 31^5 = 28 milhões de combinações por dia: com 50 chamados por dia, a chance de dois
+ * protocolos iguais num ano é de ~1,6%. Quando o SAC ganhar banco, vira sequencial.
  */
 function gerarProtocolo(agora) {
   const p = Object.fromEntries(new Intl.DateTimeFormat("pt-BR", {
@@ -56,7 +56,7 @@ function gerarProtocolo(agora) {
   const alfabeto = "23456789ABCDEFGHJKMNPQRSTUVWXYZ";
   let sufixo = "";
   for (const b of crypto.randomBytes(5)) sufixo += alfabeto[b % alfabeto.length];
-  return `SAQ-${p.year}${p.month}${p.day}-${sufixo}`;
+  return `SAC-${p.year}${p.month}${p.day}-${sufixo}`;
 }
 
 function validar(c) {
@@ -114,7 +114,7 @@ module.exports = async (req, res) => {
   try {
     rca = await buscarRca(d.email);
   } catch (e) {
-    console.error("SAQ: falha ao conferir o RCA", e && e.message);
+    console.error("SAC: falha ao conferir o RCA", e && e.message);
     return res.status(502).json({
       erro: "falha_cadastro",
       mensagem: "Não consegui conferir seu cadastro de RCA agora. Nada foi enviado — seus dados continuam na tela, tente de novo em instantes.",
@@ -129,7 +129,7 @@ module.exports = async (req, res) => {
   const agora = new Date();
   const protocolo = gerarProtocolo(agora);
   const anexos = d.fotos.map((f, i) => ({
-    cid: `foto${i + 1}.${protocolo.toLowerCase()}@saq.lube`,
+    cid: `foto${i + 1}.${protocolo.toLowerCase()}@sac.lube`,
     filename: `${protocolo}-foto-${i + 1}.${f.ext}`,
     content: f.content,
     contentType: f.contentType,
@@ -143,7 +143,7 @@ module.exports = async (req, res) => {
 
   const r = await enviar({ para: d.email, nomeRemetente: nomeRca, assunto, html, texto, anexos, protocolo });
   if (!r.ok) {
-    console.error("SAQ: falha no envio", protocolo, r.erro);
+    console.error("SAC: falha no envio", protocolo, r.erro);
     return res.status(502).json({
       erro: "falha_envio",
       mensagem: "O e-mail NÃO foi enviado. Seus dados continuam na tela — tente de novo em instantes.",
@@ -151,7 +151,7 @@ module.exports = async (req, res) => {
     });
   }
 
-  console.log("SAQ enviado", protocolo, "rca", rca.codusur, "motivo", d.motivo.cod, "nf", d.nf, "fotos", anexos.length);
+  console.log("SAC enviado", protocolo, "rca", rca.codusur, "motivo", d.motivo.cod, "nf", d.nf, "fotos", anexos.length);
   return res.status(200).json({
     ok: true,
     protocolo,

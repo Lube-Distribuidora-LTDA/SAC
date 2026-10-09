@@ -1,5 +1,5 @@
 /**
- * servidor_local.js — abre o SAQ no seu computador, antes (ou sem) publicar na Vercel.
+ * servidor_local.js — abre o SAC no seu computador, antes (ou sem) publicar na Vercel.
  *
  * Serve a pasta web/ e atende /api/produtos, /api/rca e /api/enviar com AS MESMAS funções
  * que a Vercel usa.
@@ -13,7 +13,7 @@
  * (.html para ver no navegador, .eml para abrir no Outlook) e a tela mostra o link.
  *
  * ENVIO DE VERDADE: passe um arquivo com as variáveis SMTP_* (e, se quiser,
- * IMAP_* e SAQ_COPIA_PARA):
+ * IMAP_* e SAC_COPIA_PARA):
  *   node servidor_local.js --smtp "C:\caminho\arquivo.env"
  * As senhas são lidas para a memória deste processo e nunca são impressas nem gravadas.
  *
@@ -49,11 +49,11 @@ process.env.SUPABASE_DB_PORT = process.env.SUPABASE_DB_PORT || "5432";
 /* e-mail: prévia, a não ser que venha --smtp arquivo */
 const iSmtp = process.argv.indexOf("--smtp");
 if (iSmtp > 0 && process.argv[iSmtp + 1]) {
-  carregarEnv(process.argv[iSmtp + 1], /^(SMTP_|IMAP_|SAQ_)/);
-  process.env.SAQ_MODO_PREVIA = "0";
+  carregarEnv(process.argv[iSmtp + 1], /^(SMTP_|IMAP_|SAC_)/);
+  process.env.SAC_MODO_PREVIA = "0";
 } else {
-  process.env.SAQ_MODO_PREVIA = "1";
-  process.env.SAQ_PASTA_PREVIA = PREVIAS;
+  process.env.SAC_MODO_PREVIA = "1";
+  process.env.SAC_PASTA_PREVIA = PREVIAS;
 }
 
 const rotas = {
@@ -105,8 +105,8 @@ http.createServer((req, res) => {
   res.setHeader("Cache-Control", "no-store");
   res.end(fs.readFileSync(f));
 }).listen(PORTA, () => {
-  console.log("SAQ em http://localhost:" + PORTA + "   (Ctrl+C para parar)");
-  console.log(process.env.SAQ_MODO_PREVIA === "1"
+  console.log("SAC em http://localhost:" + PORTA + "   (Ctrl+C para parar)");
+  console.log(process.env.SAC_MODO_PREVIA === "1"
     ? "Modo PRÉVIA: nada é enviado; os e-mails vão para " + PREVIAS
     : "Modo ENVIO: os e-mails SAEM de verdade por " + (process.env.SMTP_USER || "?"));
   console.log(envBanco ? "Cadastro de produtos: DATA WAREHOUSE (variáveis de " + envBanco + ")"

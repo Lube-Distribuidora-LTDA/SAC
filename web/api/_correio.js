@@ -4,11 +4,11 @@
  * Variáveis (Vercel › Settings › Environment Variables):
  *   SMTP_HOST            email-ssl.com.br   (o certificado é *.email-ssl.com.br)
  *   SMTP_PORT            465
- *   SMTP_USER            sac@lube.com.br — a caixa do SAC, por onde o SAQ sai (Júlio, 2026-10-07)
+ *   SMTP_USER            sac@lube.com.br — a caixa do SAC, por onde o SAC sai (Júlio, 2026-10-07)
  *   SMTP_PASS            a senha dessa caixa — só aqui, nunca no código
- *   SAQ_COPIA_PARA       opcional: quem recebe cópia de todo SAQ, separado por vírgula
+ *   SAC_COPIA_PARA       opcional: quem recebe cópia de todo chamado, separado por vírgula
  *   IMAP_HOST/IMAP_USER/IMAP_PASS  guardam a cópia em Enviados do sac@ (recomendado: é o
- *                        registro de todos os SAQs dentro da própria caixa do SAC)
+ *                        registro de todos os chamados dentro da própria caixa do SAC)
  *
  * REMETENTE = O PRÓPRIO RCA, NO NOME (decisão do Júlio, 2026-10-07: "como se ele
  * mesmo estivesse enviando o e-mail para ele"). O e-mail chega com o NOME do RCA
@@ -21,9 +21,9 @@
  *
  * Por que guardar em Enviados: o SMTP só transmite. No Gestão TI a cobrança saía
  * de verdade e não aparecia no webmail, dando a impressão de que nada tinha saído.
- * Enquanto o SAQ não tem banco, a pasta Enviados é o registro de tudo o que foi aberto.
+ * Enquanto o SAC não tem banco, a pasta Enviados é o registro de tudo o que foi aberto.
  *
- * SAQ_MODO_PREVIA=1 (só o servidor_local liga): não envia nada — grava o e-mail
+ * SAC_MODO_PREVIA=1 (só o servidor_local liga): não envia nada — grava o e-mail
  * em arquivo para conferir o visual. Em produção, SMTP faltando é ERRO, nunca
  * "sucesso de mentira".
  */
@@ -37,13 +37,13 @@ function smtpFaltando() {
 }
 
 function listaDeCopia() {
-  return (process.env.SAQ_COPIA_PARA || "")
+  return (process.env.SAC_COPIA_PARA || "")
     .split(/[,;]/).map((s) => s.trim()).filter(Boolean);
 }
 
 /** Nome do RCA como remetente; em objeto, o nodemailer cuida das aspas e acentos. */
 function remetente(nome) {
-  return { name: String(nome || "SAQ - Lube Distribuidora").replace(/[\r\n"]/g, " ").trim(),
+  return { name: String(nome || "SAC - Lube Distribuidora").replace(/[\r\n"]/g, " ").trim(),
            address: process.env.SMTP_USER || "sac@lube.com.br" };
 }
 
@@ -105,8 +105,8 @@ async function enviar(m) {
     ]),
   };
 
-  if (process.env.SAQ_MODO_PREVIA === "1") {
-    const pasta = process.env.SAQ_PASTA_PREVIA || path.join(process.cwd(), "previas");
+  if (process.env.SAC_MODO_PREVIA === "1") {
+    const pasta = process.env.SAC_PASTA_PREVIA || path.join(process.cwd(), "previas");
     fs.mkdirSync(pasta, { recursive: true });
     const base = m.protocolo;
     fs.writeFileSync(path.join(pasta, base + ".html"), htmlComImagens(m.html, m.anexos));

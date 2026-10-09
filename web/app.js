@@ -1,5 +1,5 @@
 /**
- * app.js — a tela do SAQ.
+ * app.js — a tela do SAC.
  *
  * - Motivos: os assuntos "SAC - ..." do WinThor (motivos.js).
  * - Produto: o código completa o nome pelo cadastro do WinThor (/api/produtos).
@@ -15,13 +15,13 @@
 (function () {
   "use strict";
 
-  var MOTIVOS = window.SAQ_MOTIVOS || [];
+  var MOTIVOS = window.SAC_MOTIVOS || [];
   var MAX_FOTOS = 3;
   var LADO_MAX = 1600;
   var QUALIDADE = 0.82;
   var MIN_DETALHE = 15;
-  var CHAVE_EMAIL = "saq.email";
-  var CHAVE_PRODUTOS = "saq.produtos.v1";
+  var CHAVE_EMAIL = "sac.email";
+  var CHAVE_PRODUTOS = "sac.produtos.v1";
   var RE_EMAIL = /^[^\s@<>(),;:"\[\]\\]+@[^\s@<>(),;:"\[\]\\]+\.[a-z]{2,}$/i;
   var DICA_PADRAO = "Do produto ou da nota fiscal — de 1 a 3 fotos.";
 
@@ -372,7 +372,7 @@
     var b = $("#enviar");
     b.classList.toggle("is-enviando", sim);
     b.setAttribute("aria-busy", sim ? "true" : "false");
-    b.querySelector(".enviar__texto").textContent = sim ? "Enviando SAQ…" : "Enviar SAQ";
+    b.querySelector(".enviar__texto").textContent = sim ? "Enviando chamado…" : "Enviar chamado";
   }
 
   function enviar(ev) {
@@ -406,11 +406,11 @@
           aviso("<strong>As fotos ficaram grandes demais.</strong> Tire uma delas e tente de novo.");
           return;
         }
-        aviso("<strong>" + texto(x.j.mensagem || "O SAQ não foi enviado.") + "</strong>" +
+        aviso("<strong>" + texto(x.j.mensagem || "O chamado não foi enviado.") + "</strong>" +
           (x.j.detalhe ? "<br><span class=\"mono\" style=\"font-size:.62rem;opacity:.8\">" + texto(x.j.detalhe) + "</span>" : ""));
       })
       .catch(function () {
-        aviso("<strong>Sem conexão com o servidor.</strong> O SAQ não foi enviado e os dados continuam na tela — confira a internet e tente de novo.");
+        aviso("<strong>Sem conexão com o servidor.</strong> O chamado não foi enviado e os dados continuam na tela — confira a internet e tente de novo.");
       })
       .then(function () { emEnvio(false); });
   }
@@ -439,7 +439,7 @@
     $("#tela-ok").focus({ preventScroll: true });
   }
 
-  function novoSaq() {
+  function novoChamado() {
     var email = $("#email").value;
     $("#form").reset();
     $("#email").value = email;
@@ -515,7 +515,7 @@
     });
 
     $("#form").addEventListener("submit", enviar);
-    $("#novo").addEventListener("click", novoSaq);
+    $("#novo").addEventListener("click", novoChamado);
   }
 
   if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", iniciar);

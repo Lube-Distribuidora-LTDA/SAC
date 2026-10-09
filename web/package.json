@@ -1,8 +1,8 @@
 {
-  "name": "saq-lube",
+  "name": "sac-lube",
   "version": "1.0.0",
   "private": true,
-  "description": "SAQ — chamado do RCA para o SAC da Lube Distribuidora: tela de abertura e e-mail de comprovante.",
+  "description": "SAC — chamado do RCA para o SAC da Lube Distribuidora: tela de abertura e e-mail de comprovante.",
   "engines": {
     "node": "22.x"
   },

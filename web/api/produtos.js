@@ -1,5 +1,5 @@
 /**
- * GET /api/produtos — o cadastro de produtos do WinThor, para o SAQ completar
+ * GET /api/produtos — o cadastro de produtos do WinThor, para o SAC completar
  * o nome do produto a partir do código (e o código a partir do nome).
  *
  * Fonte: core.dim_produto no DATA WAREHOUSE (PCPRODUT, atualizada pelo ETL do

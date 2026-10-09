@@ -1,7 +1,7 @@
 /**
- * _rca.js — quem pode abrir SAQ: o RCA ativo cujo e-mail está no WinThor.
+ * _rca.js — quem pode abrir SAC: o RCA ativo cujo e-mail está no WinThor.
  *
- * O SAQ fica aberto na tela de login do Painel Lube, sem login (decisão do
+ * O SAC fica aberto na tela de login do Painel Lube, sem login (decisão do
  * Júlio, 2026-10-07). Sem esta conferência, a rota de envio mandaria e-mail com
  * a marca da Lube para QUALQUER endereço digitado, com texto e foto de quem
  * quisesse — um disparador de spam e golpe com o nosso nome. Conferindo, o

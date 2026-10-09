@@ -1,5 +1,5 @@
 /**
- * motivos.js — os motivos que o RCA pode escolher no SAQ.
+ * motivos.js — os motivos que o RCA pode escolher no SAC.
  *
  * Saem do WinThor: tabela PCMANASSUNTO, a família "SAC - ..." (códigos 65 a 73,
  * setor 12, todos ATIVO = 'S'), conferida no Oracle em 2026-10-07. São os assuntos
@@ -9,7 +9,7 @@
  * assunto certo sem precisar adivinhar. Se o WinThor ganhar ou desativar um
  * assunto "SAC - ...", é só mexer nesta lista.
  *
- * Usado pela tela (window.SAQ_MOTIVOS) e pela API (require).
+ * Usado pela tela (window.SAC_MOTIVOS) e pela API (require).
  */
 (function (raiz) {
   var MOTIVOS = [
@@ -25,5 +25,5 @@
   ];
 
   if (typeof module === "object" && module.exports) module.exports = MOTIVOS;
-  else raiz.SAQ_MOTIVOS = MOTIVOS;
+  else raiz.SAC_MOTIVOS = MOTIVOS;
 })(this);

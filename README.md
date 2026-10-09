@@ -1,13 +1,16 @@
-# SAQ — Lube Distribuidora
+# SAC — Lube Distribuidora
+
+> Até 2026-10-09 o sistema se chamava **SAQ**; o nome certo é **SAC** (Júlio). Endereço, repositório,
+> protocolo e textos foram trocados juntos.
 
 Tela em que o **RCA abre um chamado para o SAC**: o e-mail dele, nota fiscal, motivo, detalhes, produto e
 até 3 fotos comprobatórias. Ao enviar, o sistema gera um **protocolo** e manda o comprovante **em nome do
 RCA, para o próprio RCA** — na pegada do e-mail de cobrança do Gestão TI.
 
-**Acesso sem login** (decisão do Júlio, 2026-10-07): o SAQ abre pelo atalho na **tela de login do Painel
+**Acesso sem login** (decisão do Júlio, 2026-10-07): o SAC abre pelo atalho na **tela de login do Painel
 Lube**, e o RCA não precisa de conta no portal.
 
-> **Fase 1 (2026-10-07):** só a tela e o e-mail. Ainda **não há banco**: o SAQ não fica gravado em lugar
+> **Fase 1 (2026-10-07):** só a tela e o e-mail. Ainda **não há banco**: o chamado não fica gravado em lugar
 > nenhum além do e-mail (e da cópia em Enviados, se o IMAP estiver configurado). O sistema de chamados
 > (fila, andamento, resposta do SAC) é a fase seguinte.
 
@@ -26,7 +29,7 @@ Lube**, e o RCA não precisa de conta no portal.
 ## Como funciona
 
 ```
-Tela de login do Painel Lube ──► atalho "SAQ" ──► web/index.html + app.js (celular do RCA)
+Tela de login do Painel Lube ──► atalho "SAC" ──► web/index.html + app.js (celular do RCA)
                      │  GET  /api/produtos  ◄── core.dim_produto (DATA WAREHOUSE), cache no CDN
                      │  POST /api/rca       ◄── core.dim_rca: o e-mail é de um RCA ativo?
                      │  POST /api/enviar    ──► confere o RCA de novo ──► SMTP da Locaweb ──► o próprio RCA
@@ -50,7 +53,7 @@ conferência, o comprovante só vai para o e-mail de um RCA ativo. Banco fora do
 O e-mail vem de `core.dim_rca` (colunas `email`, `email2`, `bloqueio`, `dttermino`), carregada pelo ETL do
 **BI COMERCIAL** — dono da dimensão (`web/db/07-dim-rca-email.sql` no repositório do COMERCIAL).
 Em 2026-10-07: 128 RCAs ativos, **101 com e-mail válido; 20 sem e-mail e 7 com e-mail errado no WinThor**
-(`@gmailcom`, `@htmail.com`…). Esses 27 só conseguem usar o SAQ depois de corrigido o cadastro no WinThor.
+(`@gmailcom`, `@htmail.com`…). Esses 27 só conseguem abrir chamado depois de corrigido o cadastro no WinThor.
 
 - **Abre na hora:** o cadastro de produtos (~7.300 itens) fica guardado no aparelho e é atualizado por trás.
   Se o banco estiver lento, o RCA escreve o nome do produto à mão — nada trava.
@@ -58,12 +61,12 @@ Em 2026-10-07: 128 RCAs ativos, **101 com e-mail válido; 20 sem e-mail e 7 com 
   verdade (assinatura do arquivo, não o nome), texto escapado no HTML.
 - **Nunca "enviado" de mentira:** se o SMTP falhar ou faltar, a tela diz que **não** foi e os dados continuam lá.
 - **Fotos no corpo e em anexo:** embutidas (aparecem no e-mail) e anexas (para baixar e encaminhar).
-- **Protocolo:** `SAQ-AAMMDD-XXXXX` (data de Brasília + 5 caracteres). Vira sequencial quando houver banco.
+- **Protocolo:** `SAC-AAMMDD-XXXXX` (data de Brasília + 5 caracteres). Vira sequencial quando houver banco.
 
 ## Rodar no computador
 
 ```powershell
-cd "C:\Users\gti.julio.alves\Desktop\BI\10. SAQ\web"
+cd "C:\Users\gti.julio.alves\Desktop\BI\10. SAC\web"
 npm install
 node servidor_local.js
 ```
@@ -83,7 +86,7 @@ O cadastro de produtos usa as variáveis `SUPABASE_DB_*` do ENV de um ETL (`C:\B
 ## Publicar na Vercel (ainda não publicado)
 
 Mesmo molde do REPOSIÇÕES: **Root Directory = `web`**, região `gru1`, sem build. Endereço previsto:
-`https://saq-lube.vercel.app` (é o que o atalho do portal abre).
+`https://sac-lube.vercel.app` (é o que o atalho do portal abre).
 
 | Variável | Valor |
 |---|---|
@@ -94,20 +97,20 @@ Mesmo molde do REPOSIÇÕES: **Root Directory = `web`**, região `gru1`, sem bui
 | `SUPABASE_DB_PASSWORD` | senha do DATA WAREHOUSE |
 | `SMTP_HOST` | `email-ssl.com.br` |
 | `SMTP_PORT` | `465` |
-| `SMTP_USER` | `sac@lube.com.br` — a caixa do SAC, por onde o SAQ sai (o nome mostrado é o do RCA) |
+| `SMTP_USER` | `sac@lube.com.br` — a caixa do SAC, por onde o chamado sai (o nome mostrado é o do RCA) |
 | `SMTP_PASS` | senha do `sac@` — cadastrada pelo Júlio, nunca em arquivo |
 | `IMAP_HOST` | `email-ssl.com.br` |
 | `IMAP_USER` | `sac@lube.com.br` |
 | `IMAP_PASS` | a mesma senha do `sac@` |
-| `SAQ_COPIA_PARA` | opcional — quem recebe cópia de todo SAQ na caixa de entrada |
+| `SAC_COPIA_PARA` | opcional — quem recebe cópia de todo chamado na caixa de entrada |
 
-Com o IMAP cadastrado, cada SAQ enviado fica guardado em **Enviados do `sac@`**: é o registro de todos os
-chamados dentro da caixa do próprio SAC, enquanto o SAQ não tem banco. Sem o IMAP o e-mail sai igual, só
+Com o IMAP cadastrado, cada chamado enviado fica guardado em **Enviados do `sac@`**: é o registro de todos os
+chamados dentro da caixa do próprio SAC, enquanto o sistema não tem banco. Sem o IMAP o e-mail sai igual, só
 não fica a cópia.
 
 **Guarda da Sentinela:** `middleware.ts` + `sentinela-guarda.ts` já estão em `web/` (cópia do portal,
 guarda 1.1.0). Na publicação: cadastrar o projeto em `sentinela.sistemas` com **`exige_login = false`**
-(o SAQ é aberto por decisão do Júlio) e conferir `/.sentinela/saude`. O guarda não pede login, mas barra
+(o SAC é aberto por decisão do Júlio) e conferir `/.sentinela/saude`. O guarda não pede login, mas barra
 ataque, robô e rajada — o que protege `/api/rca` de quem quiser testar e-mails em série.
 
 ## Arquivos

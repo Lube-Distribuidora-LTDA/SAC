@@ -58,7 +58,7 @@ function configuracao() {
     ssl: { rejectUnauthorized: false },
     connectionTimeoutMillis: TEMPO_POR_TENTATIVA_MS,
     statement_timeout: 40000,
-    application_name: "saq",
+    application_name: "sac",
   };
 }
 
